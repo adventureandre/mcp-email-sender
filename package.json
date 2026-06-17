@@ -1,9 +1,25 @@
 {
-  "name": "mcp-email-sender",
+  "name": "@expertcustom/mcp-email-sender",
   "version": "1.0.0",
+  "description": "MCP server de canal de email do Aurora: envio via SMTP (sendEmail) e verificacao de conexao (verifySmtp), usando nodemailer",
+  "license": "UNLICENSED",
   "type": "module",
   "main": "index.js",
+  "bin": {
+    "mcp-email-sender": "index.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
+    "build": "chmod +x index.js",
+    "prepublishOnly": "npm run build",
     "start": "node index.js"
   },
   "dependencies": {
