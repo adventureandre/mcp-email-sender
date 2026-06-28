@@ -6,7 +6,7 @@ import nodemailer from "nodemailer";
 
 const server = new McpServer({
   name: "mcp-email-sender",
-  version: "1.0.0",
+  version: "1.0.1",
 });
 
 const SMTP_HOST = process.env.SMTP_HOST;
@@ -38,6 +38,23 @@ const buildFromAddress = (overrideFrom, overrideName) => {
   return address;
 };
 
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const WHATSAPP_DOMAINS_RE = /@(c\.us|s\.whatsapp\.net|lid|g\.us|newsletter|broadcast)$/i;
+const isValidEmail = (addr) => {
+  const v = String(addr || "").trim();
+  if (!EMAIL_RE.test(v)) return false;
+  if (WHATSAPP_DOMAINS_RE.test(v)) return false; // @c.us, @s.whatsapp.net, @lid, @g.us...
+  return true;
+};
+// Recebe "a@x.com, b@y.com" e devolve os itens que NÃO são e-mail válido.
+const collectInvalidRecipients = (list) =>
+  String(list || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((addr) => !isValidEmail(addr));
+
 // ========================================
 // Tool: Enviar Email
 // ========================================
@@ -61,6 +78,28 @@ server.tool(
       if (!text && !html) {
         return {
           content: [{ type: "text", text: JSON.stringify({ success: false, error: "É necessário informar 'text' ou 'html'." }, null, 2) }],
+        };
+      }
+
+
+      // Recusa destinatários que não são e-mail (ex.: numero@c.us de WhatsApp)
+      // ANTES de tocar o SMTP — falha explícita, nunca "sucesso" enganoso.
+      if (!to || !String(to).trim()) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({ success: false, error: "Informe ao menos um destinatário em 'to'." }, null, 2) }],
+        };
+      }
+      const invalidRecipients = [
+        ...collectInvalidRecipients(to),
+        ...collectInvalidRecipients(cc),
+        ...collectInvalidRecipients(bcc),
+      ];
+      if (invalidRecipients.length > 0) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({
+            success: false,
+            error: `Destinatário(s) de e-mail inválido(s): ${invalidRecipients.join(", ")}. Esta ferramenta envia E-MAIL — não use números de telefone nem endereços de WhatsApp (@c.us).`,
+          }, null, 2) }],
         };
       }
 

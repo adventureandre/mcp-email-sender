@@ -1,6 +1,6 @@
 {
   "name": "@expertcustom/mcp-email-sender",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server de canal de email do Aurora: envio via SMTP (sendEmail) e verificacao de conexao (verifySmtp), usando nodemailer",
   "license": "UNLICENSED",
   "type": "module",
